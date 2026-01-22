@@ -22,5 +22,4 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-  },
-])
+  }, ...storybook.configs["flat/recommended"]])

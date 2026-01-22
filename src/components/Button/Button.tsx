@@ -1,15 +1,10 @@
-import React, { ButtonHTMLAttributes } from 'react';
-import './Button.css';
+import styles from './Button.module.css'
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    /** Primary color style */
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary';
 }
 
-/**
- * Simple reusable Button component
- */
 export const Button: React.FC<ButtonProps> = ({ variant = 'primary', className = '', ...props }) => {
-    const variantClass = `button-${variant}`;
+    const variantClass = styles[variant];
     return <button className={`${variantClass} ${className}`} {...props} />;
 };
