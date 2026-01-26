@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import styles from "./NavBar.module.css"
 
@@ -51,7 +51,9 @@ function useNavBarContext() {
 function Logo({ children }: NavBarLogoProps) {
     useNavBarContext();
     return (
-        <div className={styles.logo}> {children}</div >
+        <div className={styles.logo}>
+            {children}
+        </div >
     )
 }
 
@@ -68,7 +70,9 @@ function LinkItem({ children }: NavBarLinkItemProps) {
     useNavBarContext();
     return (
         <li>
-            <Slot className={styles.link}>{children}</Slot>
+            <Slot className={styles.link}>
+                {children}
+            </Slot>
         </li>
     )
 }
@@ -76,33 +80,36 @@ function LinkItem({ children }: NavBarLinkItemProps) {
 function Actions({ children }: NavBarActionProps) {
     useNavBarContext();
     return (
-        <div className={styles.actions}> {children}</div >
+        <div className={styles.actions}>
+            {children}
+        </div >
     )
 }
 
 function Toggle({ children }: NavBarToggleProps) {
     const { open, setOpen } = useNavBarContext();
-    const [isMobile, setIsMobile] = useState(() => {
-        if (typeof window !== "undefined") return window.innerWidth <= 768;
-        return true; // fallback for SSR
-    });
+    // const [isMobile, setIsMobile] = useState(() => {
+    //     if (typeof window !== "undefined") return window.innerWidth <= 768;
+    //     return true; // fallback for SSR
+    // });
 
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    // useEffect(() => {
+    //     const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    //     window.addEventListener("resize", handleResize);
+    //     return () => window.removeEventListener("resize", handleResize);
+    // }, []);
 
-    if (!setOpen || !isMobile) return null; // Only render on mobile
+    if (!setOpen) return null; // Only render on mobile
 
 
     return (
         <button
+            className={styles.toggle}
             type="button"
             aria-expanded={open}
             onClick={() => setOpen(!open)}
         >
-            {children ?? "Menu"}
+            {children ?? "☰"}
         </button>
 
     )
@@ -110,47 +117,105 @@ function Toggle({ children }: NavBarToggleProps) {
 
 function Collapse({ children }: NavBarCollapseProps) {
     const { open } = useNavBarContext();
-    const [isMobile, setIsMobile] = useState(
-        typeof window !== "undefined" ? window.innerWidth <= 768 : true
-    );
+    // const [isMobile, setIsMobile] = useState(
+    //     typeof window !== "undefined" ? window.innerWidth <= 768 : true
+    // );
 
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    // useEffect(() => {
+    //     const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    //     window.addEventListener("resize", handleResize);
+    //     return () => window.removeEventListener("resize", handleResize);
+    // }, []);
 
     // Only render on mobile AND if open
-    if (!open || !isMobile) return null;
+    // if (!open || !isMobile) return null;
     if (!open) return null;
 
-    return <div className={styles.collapse}>{children}</div>;
+    return <div className={styles.collapse}>
+        {children}
+    </div>;
+
+}
+
+function findDirectChild<P>(
+    children: React.ReactNode,
+    component: React.JSXElementConstructor<P>
+): React.ReactElement<P> | undefined {
+    return React.Children.toArray(children).find(
+        (child): child is React.ReactElement<P> =>
+            React.isValidElement<P>(child) && child.type === component
+    );
+}
+
+function containsComponent<P>(
+    children: React.ReactNode,
+    component: React.JSXElementConstructor<P>
+): boolean {
+    let found = false;
+
+    React.Children.forEach(children, (child) => {
+        if (found) return;
+
+        if (!React.isValidElement<P>(child)) return;
+
+        if (child.type === component) {
+            found = true;
+            return;
+        }
+
+        const childProps = child.props as { children?: React.ReactNode };
+        if (childProps.children) {
+            found = containsComponent(childProps.children, component);
+        }
+    });
+
+    return found;
 }
 
 
 function NavBar({ children, open: controlledOpen, onOpenChange, className }: NavBarProps) {
-    const [internalOpen, setInternalOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(() => {
-        if (typeof window !== "undefined") return window.innerWidth <= 768;
-        return true; // SSR fallback
+
+    const [internalOpen, setInternalOpen] = React.useState(false);
+
+    const open = controlledOpen ?? internalOpen;
+    const setOpen = onOpenChange ?? setInternalOpen;
+
+    const collapseChild = findDirectChild(children, Collapse);
+    const linksChild = findDirectChild<NavBarLinksProps>(children, Links);
+    const hasToggle = findDirectChild(children, Toggle);
+
+    const renderedChildren = React.Children.map(children, (child) => {
+        if (!React.isValidElement(child)) return child;
+
+        if (child.type === Actions) {
+            // Only inject Toggle if missing
+            const childProps = child.props as { children?: React.ReactNode }
+            if (!containsComponent(childProps.children, Toggle)) {
+                return React.cloneElement(child, {}, (
+                    <>
+                        {childProps.children}
+                        <Toggle />
+                    </>
+                ));
+            }
+        }
+
+        return child;
     });
-
-    const isControlled = controlledOpen !== undefined;
-    const open = isControlled ? controlledOpen : internalOpen;
-    const setOpen = (value: boolean) => {
-        if (!isControlled) setInternalOpen(value);
-        onOpenChange?.(value);
-    };
-
-    // Track viewport changes
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []); return (
+    if (hasToggle) {
+        console.warn(
+            "NavBar.Toggle cannot be a direct child of NavBar. Move it inside NavBar.Actions."
+        );
+    }
+    return (
         <NavBarContext.Provider value={{ open, setOpen }}>
-            <nav className={`${styles.navbar} ${className ?? ""}`} data-open={isMobile && open ? "" : undefined}>
-                {children}
+            <nav className={`${styles.navbar} ${className ?? ""}`} data-open={open ? "" : undefined}>
+                {renderedChildren}
+                {!collapseChild && linksChild && (
+                    <Collapse>
+                        {linksChild}
+                    </Collapse>
+                )}
             </nav >
         </NavBarContext.Provider>
     )

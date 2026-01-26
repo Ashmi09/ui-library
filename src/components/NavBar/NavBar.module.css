@@ -26,10 +26,6 @@
 
 }
 
-.navbar[data-open] {
-    --navbar-bg: rgba(105, 105, 105, 0.35);
-}
-
 .logo {
     /* CSS NavBar.Logo fixed variable */
     white-space: nowrap;
@@ -89,7 +85,7 @@
     inset-inline: 0;
     top: 100%;
 
-    display: flex;
+    display: none;
     flex-direction: column;
 
     /* CSS NavBar.Collapse Tokens */
@@ -107,12 +103,28 @@
 
 }
 
+.toggle {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .links {
         display: none;
     }
 
+    .collapse {
+        display: flex;
+    }
+
     .collapse .links {
         display: flex;
+    }
+
+    .toggle {
+        display: inline-flex;
+    }
+
+    .navbar[data-open] {
+        --navbar-bg: rgba(105, 105, 105, 0.35);
     }
 }

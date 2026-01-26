@@ -100,7 +100,7 @@ export const Collapsible = () => {
 
                 <NavBar.Actions>
                     <NavBar.Toggle>
-                        ☰
+                        Menu
                     </NavBar.Toggle>
                 </NavBar.Actions>
 
