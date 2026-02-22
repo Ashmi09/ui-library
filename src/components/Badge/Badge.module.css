@@ -1,0 +1,22 @@
+.badge {
+    /* CSS Badge fixed variables */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+
+    /* CSS Badge Tokens */
+    border-radius: var(--badge-border-radius, 9999px);
+    font-size: var(--badge-font-size, 0.875rem);
+    font-weight: var(--badge-font-weight, 500);
+    backdrop-filter: blur(var(--badge-backdrop-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--badge-backdrop-blur, 12px));
+
+}
+
+.badgeLogo {
+    /* CSS Badge Logo fixed variables */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
